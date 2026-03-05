@@ -6,6 +6,9 @@
     "start:dev": "tsx watch src/server.ts",
     "build": "tsup src"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "keywords": [],
   "type": "module",
   "author": "",
