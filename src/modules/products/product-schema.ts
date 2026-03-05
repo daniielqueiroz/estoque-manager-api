@@ -16,3 +16,9 @@ export const createProductSchema = z.object({
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
+
+export const findProductIdSchema = z.object({
+  id: z.uuid("ID Inválido"),
+});
+
+export type FindProductIdInput = z.infer<typeof findProductIdSchema>;

@@ -6,6 +6,7 @@ import { createProductSchema } from "./product-schema";
 export const productRouter = Router();
 
 productRouter.get("/", ProductController.getProducts);
+productRouter.get("/:id", ProductController.getProduct);
 productRouter.post(
   "/",
   validadeRequest(createProductSchema),
