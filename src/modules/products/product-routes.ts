@@ -7,6 +7,7 @@ export const productRouter = Router();
 
 productRouter.get("/", ProductController.getProducts);
 productRouter.get("/:id", ProductController.getProduct);
+productRouter.delete("/:id", ProductController.deleteProduct);
 productRouter.post(
   "/",
   validadeRequest(createProductSchema),

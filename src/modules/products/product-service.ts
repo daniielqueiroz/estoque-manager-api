@@ -11,6 +11,11 @@ export const getProductById = async (productId: FindProductIdInput) => {
   return product;
 };
 
+export const deleteProductById = async (productId: FindProductIdInput) => {
+  const deleted = await ProductRepository.deleteById(productId);
+  return deleted;
+};
+
 export const createProduct = async (data: CreateProductInput) => {
   const product = await ProductRepository.create(data);
   return product;
