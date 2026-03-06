@@ -11,3 +11,4 @@ saleRouter.post(
   SaleController.postSale,
 );
 saleRouter.get("/", SaleController.getSales);
+saleRouter.get("/:id", SaleController.getSale);

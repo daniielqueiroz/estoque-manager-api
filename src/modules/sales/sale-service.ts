@@ -1,4 +1,4 @@
-import { CreateSaleInput } from "./sale-schema";
+import { CreateSaleInput, FindSaleIdInput } from "./sale-schema";
 import * as ProductRepository from "../products/product-repository";
 import * as SaleRepository from "./sale-repository";
 
@@ -44,4 +44,9 @@ export const createSale = async (data: CreateSaleInput) => {
 export const listSales = async () => {
   const sales = await SaleRepository.findAll();
   return sales;
+};
+
+export const searchSaleById = async (id: FindSaleIdInput) => {
+  const sale = await SaleRepository.findById(id);
+  return sale;
 };

@@ -14,5 +14,9 @@ export const createSaleSchema = z.object({
     )
     .min(1, "Deve haver pelo menos um item na venda"),
 });
-
 export type CreateSaleInput = z.infer<typeof createSaleSchema>;
+
+export const findSaleIdSchema = z.object({
+  id: z.uuid("ID Inválido"),
+});
+export type FindSaleIdInput = z.infer<typeof findSaleIdSchema>;

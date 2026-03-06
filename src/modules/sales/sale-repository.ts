@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import { FindSaleIdInput } from "./sale-schema";
 
 /**
  * Cria uma venda contedo uma lista de Products atraves do Nested Writes do Prisma
@@ -48,4 +49,18 @@ export const findAll = async () => {
     },
   });
   return sales;
+};
+
+export const findById = async ({ id }: FindSaleIdInput) => {
+  const sale = await prisma.sale.findFirst({
+    where: { id },
+    include: {
+      items: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
+  return sale;
 };
