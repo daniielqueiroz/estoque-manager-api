@@ -40,3 +40,8 @@ export const createSale = async (data: CreateSaleInput) => {
 
   return SaleRepository.create(data.customerName, totalAmount, items);
 };
+
+export const listSales = async () => {
+  const sales = await SaleRepository.findAll();
+  return sales;
+};

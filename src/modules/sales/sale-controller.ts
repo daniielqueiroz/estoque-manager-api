@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { CreateSaleInput } from "./sale-schema";
 import * as SaleService from "./sale-service";
 
-export const createSale = async (req: Request, res: Response) => {
+export const postSale = async (req: Request, res: Response) => {
   const body = req.body as CreateSaleInput;
 
   try {
@@ -15,4 +15,14 @@ export const createSale = async (req: Request, res: Response) => {
     }
     return res.status(500).json({ message: "Erro interno" });
   }
+};
+
+export const getSales = async (req: Request, res: Response) => {
+  const sales = await SaleService.listSales();
+
+  if (!sales) {
+    return res.status(400).json({ message: "Nenhuma venda encontrada" });
+  }
+
+  return res.status(200).json(sales);
 };

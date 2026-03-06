@@ -40,3 +40,12 @@ export const create = async (
     return sale;
   });
 };
+
+export const findAll = async () => {
+  const sales = await prisma.sale.findMany({
+    include: {
+      items: true,
+    },
+  });
+  return sales;
+};

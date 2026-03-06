@@ -8,5 +8,6 @@ export const saleRouter = Router();
 saleRouter.post(
   "/",
   validadeRequest(createSaleSchema),
-  SaleController.createSale,
+  SaleController.postSale,
 );
+saleRouter.get("/", SaleController.getSales);
