@@ -1,3 +1,4 @@
+import { SaleStatus } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { FindSaleIdInput } from "./sale-schema";
 
@@ -67,7 +68,7 @@ export const findById = async ({ id }: FindSaleIdInput) => {
 
 export const cancelById = async ({ id }: FindSaleIdInput) => {
   const sale = await prisma.sale.findFirst({
-    where: { id, status: { not: "CANCELLED" } },
+    where: { id, status: { not: SaleStatus.CANCELLED } },
     include: { items: true },
   });
 
@@ -77,7 +78,7 @@ export const cancelById = async ({ id }: FindSaleIdInput) => {
   return prisma.$transaction(async (tx) => {
     await tx.sale.update({
       where: { id },
-      data: { status: "CANCELLED" },
+      data: { status: SaleStatus.CANCELLED },
     });
 
     for (const item of sale.items) {
