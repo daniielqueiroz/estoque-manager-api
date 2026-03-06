@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start:dev": "tsx watch src/server.ts",
+    "populatedb": "tsx prisma/seed.ts",
     "build": "tsup src"
   },
   "prisma": {

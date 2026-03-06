@@ -30,8 +30,10 @@ model Sale {
   id           String     @id @default(uuid())
   customerName String
   totalAmount  Float
+  status       SaleStatus @default(CONFIRMED)
   items        SaleItem[]
   createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model SaleItem {
@@ -43,4 +45,9 @@ model SaleItem {
   quantity  Int
   unitPrice Float
   createdAt DateTime @default(now())
+}
+
+enum SaleStatus {
+  CONFIRMED
+  CANCELLED
 }
