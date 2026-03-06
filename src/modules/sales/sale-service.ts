@@ -1,4 +1,8 @@
-import { CreateSaleInput, FindSaleIdInput } from "./sale-schema";
+import {
+  CreateSaleInput,
+  FindSaleIdInput,
+  GenerateSaleReportInput,
+} from "./sale-schema";
 import * as ProductRepository from "../products/product-repository";
 import * as SaleRepository from "./sale-repository";
 
@@ -49,6 +53,25 @@ export const listSales = async () => {
 export const searchSaleById = async (id: FindSaleIdInput) => {
   const sale = await SaleRepository.findById(id);
   return sale;
+};
+
+export const generateSaleReport = async (range: GenerateSaleReportInput) => {
+  const { totalSales, revenue, topProducts } =
+    await SaleRepository.reportData(range);
+
+  const productsId = topProducts.map((p) => p.productId);
+
+  const products = await ProductRepository.findManyByIds(productsId);
+
+  return {
+    totalSales,
+    revenue: revenue._sum.totalAmount ?? 0,
+    topProducts: topProducts.map((p) => ({
+      productId: p.productId,
+      name: products.find((product) => product.id === p.productId)?.name,
+      totalSold: p._sum?.quantity,
+    })),
+  };
 };
 
 export const cancelSaleById = async (id: FindSaleIdInput) => {

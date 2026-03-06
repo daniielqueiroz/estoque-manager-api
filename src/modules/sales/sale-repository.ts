@@ -1,6 +1,6 @@
 import { SaleStatus } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
-import { FindSaleIdInput } from "./sale-schema";
+import { FindSaleIdInput, GenerateSaleReportInput } from "./sale-schema";
 
 /**
  * Cria uma venda contedo uma lista de Products atraves do Nested Writes do Prisma
@@ -64,6 +64,37 @@ export const findById = async ({ id }: FindSaleIdInput) => {
     },
   });
   return sale;
+};
+
+export const reportData = async (range: GenerateSaleReportInput) => {
+  const condition = {
+    status: { not: SaleStatus.CANCELLED },
+    createdAt: { gte: range.startDate, lte: range.endDate },
+  };
+
+  const [totalSales, revenue, topProducts] = await Promise.all([
+    //Total Sales
+    prisma.sale.count({
+      where: condition,
+    }),
+
+    //Revenue - Receita total gerada
+    prisma.sale.aggregate({
+      where: condition,
+      _sum: { totalAmount: true },
+    }),
+
+    //Top Products
+    prisma.saleItem.groupBy({
+      by: ["productId"],
+      where: { sale: { ...condition } },
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: "desc" } },
+      take: 5,
+    }),
+  ]);
+
+  return { totalSales, revenue, topProducts };
 };
 
 export const cancelById = async ({ id }: FindSaleIdInput) => {

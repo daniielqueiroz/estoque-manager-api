@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { CreateSaleInput, findSaleIdSchema } from "./sale-schema";
+import {
+  CreateSaleInput,
+  findSaleIdSchema,
+  generateSaleReportSchema,
+} from "./sale-schema";
 import * as SaleService from "./sale-service";
 
 export const postSale = async (req: Request, res: Response) => {
@@ -43,6 +47,24 @@ export const getSale = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(sale);
+};
+
+export const getSaleReport = async (req: Request, res: Response) => {
+  const range = req.query;
+
+  const validRange = generateSaleReportSchema.safeParse(range);
+
+  if (!validRange.success) {
+    return res.status(400).json({ message: "O range informado é inválido" });
+  }
+
+  const saleReport = await SaleService.generateSaleReport(validRange.data);
+
+  if (!saleReport) {
+    return res.status(404).json({ message: "Nenhum relatório disponível" });
+  }
+
+  return res.status(200).json(saleReport);
 };
 
 export const cancelSale = async (req: Request, res: Response) => {
