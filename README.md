@@ -249,7 +249,7 @@ SaleItem
 
 - **Node.js** v18 ou superior
 - **npm** v9 ou superior
-- Uma instância de **MySQL** ou **MariaDB** acessível
+- Uma instância de **MySQL** acessível
 
 ### 1. Clonar o repositório
 
@@ -286,19 +286,13 @@ PORT=8080
 DATABASE_URL="mysql://root:minhasenha@localhost:3306/estoque_manager"
 ```
 
-> O banco de dados informado na `DATABASE_URL` precisa existir previamente. Crie-o antes de prosseguir:
->
-> ```sql
-> CREATE DATABASE estoque_manager;
-> ```
-
 ### 4. Executar as migrations (criar as tabelas)
 
 ```bash
-npx prisma migrate deploy
+npx prisma migrate dev
 ```
 
-Esse comando aplica todas as migrations existentes no banco de dados configurado, criando as tabelas `Product`, `Sale` e `SaleItem`.
+Esse comando cria o banco de dados caso ele não exista, aplica todas as migrations e gera o Prisma Client automaticamente.
 
 ### 5. (Opcional) Popular o banco com dados de exemplo
 
@@ -348,10 +342,10 @@ node dist/server.js
 
 ## Scripts Disponíveis
 
-| Script          | Comando                     | Descrição                           |
-| --------------- | --------------------------- | ----------------------------------- |
-| Desenvolvimento | `npm run start:dev`         | Inicia com hot reload via tsx       |
-| Seed            | `npm run populatedb`        | Popula o banco com dados de exemplo |
-| Build           | `npm run build`             | Compila TypeScript para JavaScript  |
-| Migrations      | `npx prisma migrate deploy` | Aplica migrations no banco          |
-| Prisma Studio   | `npx prisma studio`         | Abre interface visual do banco      |
+| Script          | Comando                  | Descrição                           |
+| --------------- | ------------------------ | ----------------------------------- |
+| Desenvolvimento | `npm run start:dev`      | Inicia com hot reload via tsx       |
+| Seed            | `npm run populatedb`     | Popula o banco com dados de exemplo |
+| Build           | `npm run build`          | Compila TypeScript para JavaScript  |
+| Migrations      | `npx prisma migrate dev` | Cria o banco e aplica as migrations |
+| Prisma Studio   | `npx prisma studio`      | Abre interface visual do banco      |
