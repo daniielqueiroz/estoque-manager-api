@@ -343,15 +343,9 @@ DATABASE_URL="mysql://root:minhasenha@localhost:3306/estoque_manager"
 npx prisma migrate dev
 ```
 
-Esse comando cria o banco de dados caso ele não exista, aplica todas as migrations e gera o Prisma Client automaticamente.
+Esse comando cria o banco de dados caso ele não exista, aplica todas as migrations, gera o Prisma Client automaticamente e ao final roda o arquivo seed.ts da pasta prisma para popular o banco com dados mockados para teste.
 
-### 5. (Opcional) Popular o banco com dados de exemplo
-
-```bash
-npm run populatedb
-```
-
-### 6. Iniciar o servidor em modo desenvolvimento
+### 5. Iniciar o servidor em modo desenvolvimento
 
 ```bash
 npm run start:dev
@@ -363,7 +357,7 @@ O servidor será iniciado com hot reload via `tsx watch`. A saída esperada é:
 Servidor rodando na porta 8080
 ```
 
-### 7. Testar a API
+### 6. Testar a API
 
 Com o servidor em execução, faça uma requisição de teste:
 
