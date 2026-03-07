@@ -12,6 +12,7 @@ productRouter.post(
 );
 productRouter.get("/", ProductController.getProducts);
 productRouter.get("/:id", ProductController.getProduct);
+productRouter.get("/:id/report", ProductController.getProductSaleReport);
 productRouter.put(
   "/:id",
   validadeRequest(updateProductSchema),

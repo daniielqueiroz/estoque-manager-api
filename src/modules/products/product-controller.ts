@@ -3,6 +3,7 @@ import * as ProductService from "./product-service";
 import {
   CreateProductInput,
   findProductIdSchema,
+  generateProductReportSchema,
   UpdateProductInput,
 } from "./product-schema";
 
@@ -34,6 +35,37 @@ export const getProduct = async (req: Request, res: Response) => {
   }
 
   return res.status(200).json(data);
+};
+
+export const getProductSaleReport = async (req: Request, res: Response) => {
+  const id = req.params;
+  const validId = findProductIdSchema.safeParse(id);
+  if (!validId.success) {
+    return res.status(400).json({ message: "ID inválido" });
+  }
+
+  const range = req.query;
+  const validRange = generateProductReportSchema.safeParse(range);
+
+  if (!validRange.success) {
+    return res.status(400).json({ message: "O range informado é inválido" });
+  }
+
+  try {
+    const productSaleReport = await ProductService.generateProductSaleReport(
+      validId.data,
+      validRange.data,
+    );
+
+    return res.status(200).json(productSaleReport);
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({ message: "Produto não encontrado" });
+    }
+    return res
+      .status(500)
+      .json({ message: "Erro ao gerar relatório do produto" });
+  }
 };
 
 export const updateProduct = async (req: Request, res: Response) => {
