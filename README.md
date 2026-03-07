@@ -38,8 +38,11 @@ src/
 │   └── prisma.ts              # Instância singleton do PrismaClient
 │
 ├── shared/
+│   ├── errors/
+│   │   └── AppError.ts            # Classe de erro customizado da aplicação
 │   └── middlewares/
-│       └── validateRequest.ts # Middleware de validação via Zod
+│       ├── errorHandler.ts        # Middleware global de tratamento de erros
+│       └── validateRequest.ts     # Middleware de validação via Zod
 │
 └── modules/
     ├── products/
@@ -92,6 +95,18 @@ O arquivo `src/lib/prisma.ts` exporta uma única instância compartilhada do `Pr
 
 **Tipagem end-to-end com Zod**
 Os schemas Zod são a única fonte de verdade para os tipos de entrada. Os tipos TypeScript são todos derivados via `z.infer<typeof schema>`, garantindo que schema e tipos nunca fiquem dessincronizados.
+
+**Tratamento centralizado de erros**
+A aplicação utiliza um middleware global de erros (`errorHandler`) registrado no `app.ts` como última camada. Qualquer exceção lançada em qualquer ponto da aplicação é automaticamente capturada pelo Express 5 — que propaga erros síncronos e assíncronos sem necessidade de `try/catch` nos controllers — e encaminhada a esse middleware.
+
+A classe `AppError` é usada nos services para sinalizar erros de negócio (ex: recurso não encontrado, estoque insuficiente) com o status HTTP correspondente. O `errorHandler` distingue três tipos de erro:
+
+| Tipo de erro                    | Status                        | Origem                             |
+| ------------------------------- | ----------------------------- | ---------------------------------- |
+| `AppError`                      | Definido no lançamento        | Regras de negócio nos services     |
+| `ZodError`                      | `400`                         | Validação de body, params ou query |
+| `PrismaClientKnownRequestError` | `409` (P2002) / `404` (P2025) | Violações de constraint no banco   |
+| Erro desconhecido               | `500`                         | Qualquer exceção não mapeada       |
 
 ---
 
@@ -256,6 +271,43 @@ GET /api/sales/report?startDate=2025-01-01&endDate=2025-01-31
       "revenue": 2990.0
     }
   ]
+}
+```
+
+---
+
+## Respostas de Erro
+
+Todos os erros seguem um formato JSON consistente.
+
+**Erro de negócio** — recurso não encontrado, estoque insuficiente, venda já cancelada, etc.
+
+```json
+{
+  "message": "Produto não encontrado"
+}
+```
+
+**Erro de validação** — body, params ou query inválidos:
+
+```json
+{
+  "message": "Dados dos inputs não conformes com o solicitado",
+  "errors": [
+    {
+      "code": "too_small",
+      "path": ["name"],
+      "message": "Nome deve ter pelo menos 2 caracteres"
+    }
+  ]
+}
+```
+
+**Erro interno** — exceção não mapeada:
+
+```json
+{
+  "message": "Erro interno na aplicação"
 }
 ```
 
