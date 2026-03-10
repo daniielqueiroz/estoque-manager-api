@@ -45,9 +45,9 @@ export type GenerateProductReportInput = z.infer<
 export type DailySaleRow = {
   date: string;
   /** Número de transações de venda em que o produto apareceu no dia */
-  salesOccurrences: bigint;
+  dailySales: bigint;
   /** Total de unidades vendidas no dia */
-  totalQuantity: bigint;
+  productsSold: bigint;
   avgPrice: number;
   revenue: number;
 };

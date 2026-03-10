@@ -43,7 +43,7 @@ export const reportProduct = async (
     createdAt: { gte: range.startDate, lte: range.endDate },
   };
 
-  const [salesOccurrences, totalProductsSold, dailySales] = await Promise.all([
+  const [totalSales, totalProductsSold, dailyData] = await Promise.all([
     // Total de vendas que esse produto
     prisma.saleItem.count({
       where: condition,
@@ -59,15 +59,15 @@ export const reportProduct = async (
     Foi necessário fazer raw SQL, pois o Prisma só permite agrupar por data/hora
     mas eu precisava agrupar apenas pela data
 
-    salesOccurrences: Número de transações de venda em que o produto apareceu no dia
-    totalQuantity: Quantidade de produtos vendidos no dia
+    dailySales: Número de transações de venda em que o produto apareceu no dia
+    productsSold: Quantidade de produtos vendidos no dia
     avgPrice: Preço médio, pois pode ocorrer do preço mudar ao longo do dia, então não é seguro pegar de unitPrice
     revenue: Total arrecadado na venda desse produto no dia */
     prisma.$queryRaw<DailySaleRow[]>`
       SELECT
         DATE(createdAt)            AS date,
-        COUNT(*)                   AS salesOccurrences,
-        SUM(quantity)              AS totalQuantity,
+        COUNT(*)                   AS dailySales,
+        SUM(quantity)              AS productsSold,
         AVG(unitPrice)             AS avgPrice,
         SUM(unitPrice * quantity)  AS revenue
       FROM SaleItem
@@ -80,9 +80,9 @@ export const reportProduct = async (
   ]);
 
   return {
-    salesOccurrences,
+    totalSales,
     totalProductsSold: totalProductsSold._sum.quantity,
-    dailySales,
+    dailyData,
   };
 };
 

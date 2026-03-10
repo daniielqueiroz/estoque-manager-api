@@ -36,20 +36,20 @@ export const generateProductSaleReport = async (
   if (!product) {
     throw new AppError("Produto não encontrado", 404);
   }
+  const { totalSales, totalProductsSold, dailyData } =
+    await ProductRepository.reportProduct(id, range);
 
-  const report = await ProductRepository.reportProduct(id, range);
-
-  const totalRevenue = report.dailySales.reduce(
+  const totalRevenue = dailyData.reduce(
     (acc, day) => acc + Number(day.revenue),
     0,
   );
 
   // Necessário fazer Cast para Number, pois o MySQL devolve BigInt na raw SQL ao usar COUNT e SUM
   // e o Express não consegue serializar o bigint
-  const dailySales = report.dailySales.map((day) => ({
+  const dailySales = dailyData.map((day) => ({
     date: day.date,
-    salesOccurrences: Number(day.salesOccurrences),
-    totalQuantity: Number(day.totalQuantity),
+    dailySales: Number(day.dailySales),
+    productsSold: Number(day.productsSold),
     avgPrice: Number(day.avgPrice),
     revenue: Number(day.revenue),
   }));
@@ -57,8 +57,8 @@ export const generateProductSaleReport = async (
   return {
     product,
     report: {
-      salesOccurrences: report.salesOccurrences,
-      totalProductsSold: report.totalProductsSold,
+      totalSales,
+      totalProductsSold,
       totalRevenue,
       dailySales,
     },

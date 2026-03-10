@@ -65,21 +65,24 @@ export const searchSaleById = async (id: FindSaleIdInput) => {
 };
 
 export const generateSaleReport = async (range: GenerateSaleReportInput) => {
-  const { totalSales, revenue, topProducts } =
+  const { totalSales, totalProductsSold, totalRevenue, dailyData } =
     await SaleRepository.reportData(range);
 
-  const productsId = topProducts.map((p) => p.productId);
-
-  const products = await ProductRepository.findManyByIds(productsId);
+  // Necessário fazer Cast para Number, pois o MySQL devolve BigInt na raw SQL ao usar COUNT e SUM
+  // e o Express não consegue serializar o bigint
+  const dailySales = dailyData.map((day) => ({
+    date: day.date,
+    dailySales: Number(day.dailySales),
+    productsSold: Number(day.productsSold),
+    avgPrice: Number(day.avgPrice),
+    revenue: Number(day.revenue),
+  }));
 
   return {
     totalSales,
-    revenue: revenue._sum.totalAmount ?? 0,
-    topProducts: topProducts.map((p) => ({
-      productId: p.productId,
-      name: products.find((product) => product.id === p.productId)?.name,
-      totalSold: p._sum?.quantity,
-    })),
+    totalProductsSold: totalProductsSold._sum.quantity ?? 0,
+    totalRevenue: totalRevenue._sum.totalAmount ?? 0,
+    dailySales,
   };
 };
 

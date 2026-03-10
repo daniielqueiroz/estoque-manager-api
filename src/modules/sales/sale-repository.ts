@@ -1,6 +1,7 @@
 import { SaleStatus } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { FindSaleIdInput, GenerateSaleReportInput } from "./sale-schema";
+import { DailySaleRow } from "../products/product-schema";
 
 /**
  * Cria uma venda contedo uma lista de Products atraves do Nested Writes do Prisma
@@ -90,29 +91,48 @@ export const reportData = async (range: GenerateSaleReportInput) => {
     createdAt: { gte: range.startDate, lte: range.endDate },
   };
 
-  const [totalSales, revenue, topProducts] = await Promise.all([
-    //Total Sales
-    prisma.sale.count({
-      where: condition,
-    }),
+  const [totalSales, totalProductsSold, totalRevenue, dailyData] =
+    await Promise.all([
+      //Total Sales
+      prisma.sale.count({
+        where: condition,
+      }),
 
-    //Revenue - Receita total gerada
-    prisma.sale.aggregate({
-      where: condition,
-      _sum: { totalAmount: true },
-    }),
+      // Total de Produtos vendidos no range informado
+      prisma.saleItem.aggregate({
+        where: { sale: condition },
+        _sum: { quantity: true },
+      }),
 
-    //Top Products
-    prisma.saleItem.groupBy({
-      by: ["productId"],
-      where: { sale: { ...condition } },
-      _sum: { quantity: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: 5,
-    }),
-  ]);
+      //Revenue - Receita total gerada
+      prisma.sale.aggregate({
+        where: condition,
+        _sum: { totalAmount: true },
+      }),
 
-  return { totalSales, revenue, topProducts };
+      /* Dados das vendas feitas por dia
+    Foi necessário fazer raw SQL, pois o Prisma só permite agrupar por data/hora
+    mas eu precisava agrupar apenas pela data
+
+    dailySales: Número de transações de venda em que o produto apareceu no dia
+    productsSold: Quantidade de produtos vendidos no dia
+    avgPrice: Preço médio, pois pode ocorrer do preço mudar ao longo do dia, então não é seguro pegar de unitPrice
+    revenue: Total arrecadado na venda desse produto no dia */
+      prisma.$queryRaw<DailySaleRow[]>`
+      SELECT
+        DATE(createdAt)            AS date,
+        COUNT(*)                   AS dailySales,
+        SUM(quantity)              AS productsSold,
+        AVG(unitPrice)             as avgPrice,
+        SUM(unitPrice * quantity)  AS revenue
+      FROM SaleItem
+        WHERE createdAt >= ${range.startDate}
+        AND createdAt <= ${range.endDate}
+      GROUP BY DATE(createdAt)
+    `,
+    ]);
+
+  return { totalSales, totalProductsSold, totalRevenue, dailyData };
 };
 
 export const cancelById = async ({ id }: FindSaleIdInput) => {
