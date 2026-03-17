@@ -44,9 +44,7 @@ export const getSummaryMetrics = async () => {
       }),
 
       //   Produtos cadastrados
-      await prisma.product.count({
-        where: { createdAt: { gte: startOfDay, lte: endOfDay } },
-      }),
+      await prisma.product.count(),
     ],
   );
 
