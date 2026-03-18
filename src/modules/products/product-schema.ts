@@ -12,7 +12,11 @@ export const createProductSchema = z.object({
     .number()
     .int("Quantidade deve ser um valor inteiro")
     .min(0, "Quantidade não pode ser negativa"),
-  category: z.string().trim().max(50),
+  category: z
+    .string()
+    .trim()
+    .min(3, "Categoria deve ter pelo menos 3 caracteres")
+    .max(50),
 });
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 
