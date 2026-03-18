@@ -16,6 +16,7 @@ export const create = async (data: CreateProductInput) => {
 export const findAll = async () => {
   const products = await prisma.product.findMany({
     where: { deletedAt: null },
+    orderBy: { updatedAt: "desc" },
   });
   return products;
 };
