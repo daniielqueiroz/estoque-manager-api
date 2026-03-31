@@ -1,4 +1,4 @@
-import { SaleStatus } from "@prisma/client";
+import { Prisma, SaleStatus } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { FindSaleIdInput, GenerateSaleReportInput } from "./sale-schema";
 import { DailySaleRow } from "../products/product-schema";
@@ -88,10 +88,15 @@ export const findById = async ({ id }: FindSaleIdInput) => {
 export const reportData = async (range: GenerateSaleReportInput) => {
   const condition = {
     status: { not: SaleStatus.CANCELLED },
-    createdAt: { gte: range.startDate, lte: range.endDate },
+    createdAt: {
+      gte: range.startDate,
+      lt: range.endDate,
+    },
   };
 
-  const [totalSales, totalProductsSold, totalRevenue, dailyData] =
+  const timeZone = Prisma.raw(`'${range.userTz}'`);
+
+  const [totalSales, totalProductsSold, totalRevenue, rawDailyData] =
     await Promise.all([
       //Total Sales
       prisma.sale.count({
@@ -120,20 +125,26 @@ export const reportData = async (range: GenerateSaleReportInput) => {
     revenue: Total arrecadado na venda desse produto no dia */
       prisma.$queryRaw<DailySaleRow[]>`
         SELECT
-          DATE(si.createdAt)            AS date,
-          COUNT(*)                      AS dailySales,
-          SUM(si.quantity)              AS productsSold,
-          AVG(si.unitPrice)             AS avgPrice,
+          DATE(CONVERT_TZ(si.createdAt, '+00:00', ${timeZone})) AS date,
+          COUNT(DISTINCT si.saleId)       AS dailySales,
+          SUM(si.quantity)                AS productsSold,
+          AVG(si.unitPrice)              AS avgPrice,
           SUM(si.unitPrice * si.quantity) AS revenue
         FROM SaleItem si
         INNER JOIN Sale s ON s.id = si.saleId
         WHERE si.createdAt >= ${range.startDate}
-          AND si.createdAt <= ${range.endDate}
+          AND si.createdAt <  ${range.endDate}
           AND s.status != 'CANCELLED'
-        GROUP BY DATE(si.createdAt)
+        GROUP BY DATE(CONVERT_TZ(si.createdAt, '+00:00', ${timeZone}))
         ORDER BY date ASC
       `,
     ]);
+
+  // Remover horas da Data, deixando apenas YYYY-MM-DD
+  const dailyData = rawDailyData.map((row) => ({
+    ...row,
+    date: new Date(row.date).toISOString().split("T")[0],
+  }));
 
   return { totalSales, totalProductsSold, totalRevenue, dailyData };
 };
