@@ -1,45 +1,29 @@
 import { SaleStatus } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
+import { GetDashboardDataSchema } from "./dashboard-schema";
 
-export const getSummaryMetrics = async () => {
-  const now = new Date();
-
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endOfDay = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    23,
-    59,
-    59,
-    999,
-  );
+export const getSummaryMetrics = async (range: GetDashboardDataSchema) => {
+  const condition = {
+    createdAt: { gte: range.startDate, lt: range.endDate },
+    status: SaleStatus.CONFIRMED,
+  };
 
   const [totalSales, revenue, averageTicket, totalProducts] = await Promise.all(
     [
       // Vendas do dia
       await prisma.sale.count({
-        where: {
-          createdAt: { gte: startOfDay, lte: endOfDay },
-          status: SaleStatus.CONFIRMED,
-        },
+        where: condition,
       }),
 
       //   Faturamento do dia
       await prisma.sale.aggregate({
-        where: {
-          createdAt: { gte: startOfDay, lte: endOfDay },
-          status: SaleStatus.CONFIRMED,
-        },
+        where: condition,
         _sum: { totalAmount: true },
       }),
 
       //   Ticket médio do dia
       await prisma.sale.aggregate({
-        where: {
-          createdAt: { gte: startOfDay, lte: endOfDay },
-          status: SaleStatus.CONFIRMED,
-        },
+        where: condition,
         _avg: { totalAmount: true },
       }),
 
