@@ -42,6 +42,14 @@ export type GenerateProductReportInput = z.infer<
   typeof generateProductReportSchema
 >;
 
+export const listProductsSortSchema = z.object({
+  sortBy: z
+    .enum(["name", "price", "category", "createdAt", "updatedAt"])
+    .default("updatedAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+export type ListProductsSort = z.infer<typeof listProductsSortSchema>;
+
 export type DailySaleRow = {
   date: string;
   /** Número de transações de venda em que o produto apareceu no dia */

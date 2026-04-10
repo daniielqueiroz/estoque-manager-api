@@ -5,6 +5,7 @@ import {
   DailySaleRow,
   FindProductIdInput,
   GenerateProductReportInput,
+  ListProductsSort,
   UpdateProductInput,
 } from "./product-schema";
 
@@ -13,18 +14,23 @@ export const create = async (data: CreateProductInput) => {
   return user;
 };
 
-export const findAll = async (page: number, pageSize: number) => {
+export const findAll = async (
+  page: number,
+  pageSize: number,
+  sort: ListProductsSort,
+) => {
   const skip = (page - 1) * pageSize;
+  const where = { deletedAt: null };
 
   const [data, total] = await Promise.all([
     prisma.product.findMany({
       skip,
       take: pageSize,
-      where: { deletedAt: null },
-      orderBy: { updatedAt: "desc" },
+      where,
+      orderBy: { [sort.sortBy]: sort.sortOrder },
     }),
 
-    prisma.product.count(),
+    prisma.product.count({ where }),
   ]);
 
   return { data, total };

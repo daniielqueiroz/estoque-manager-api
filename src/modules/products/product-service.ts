@@ -5,6 +5,7 @@ import {
   CreateProductInput,
   FindProductIdInput,
   GenerateProductReportInput,
+  ListProductsSort,
   UpdateProductInput,
 } from "./product-schema";
 
@@ -13,8 +14,12 @@ export const createProduct = async (data: CreateProductInput) => {
   return product;
 };
 
-export const listProducts = async (page: number, pageSize: number) => {
-  const { data, total } = await ProductRepository.findAll(page, pageSize);
+export const listProducts = async (
+  page: number,
+  pageSize: number,
+  sort: ListProductsSort,
+) => {
+  const { data, total } = await ProductRepository.findAll(page, pageSize, sort);
 
   return paginate({ data, total, page, pageSize });
 };
