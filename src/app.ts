@@ -3,7 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 import { router } from "./routers";
 import { errorHandler } from "./shared/middlewares/errorHandler";
-import { timezoneMiddleware } from "./shared/middlewares/timeZone";
+import { timezoneMiddleware } from "./shared/middlewares/timezone";
 
 function createApp() {
   const app = express();
