@@ -50,6 +50,11 @@ export const listProductsSortSchema = z.object({
 });
 export type ListProductsSort = z.infer<typeof listProductsSortSchema>;
 
+export const listProductsSearchSchema = z.object({
+  search: z.string().trim().min(1).optional(),
+});
+export type ListProductsSearch = z.infer<typeof listProductsSearchSchema>;
+
 export type DailySaleRow = {
   date: string;
   /** Número de transações de venda em que o produto apareceu no dia */

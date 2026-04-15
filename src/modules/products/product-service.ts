@@ -18,8 +18,9 @@ export const listProducts = async (
   page: number,
   pageSize: number,
   sort: ListProductsSort,
+  search?: string,
 ) => {
-  const { data, total } = await ProductRepository.findAll(page, pageSize, sort);
+  const { data, total } = await ProductRepository.findAll(page, pageSize, sort, search);
 
   return paginate({ data, total, page, pageSize });
 };

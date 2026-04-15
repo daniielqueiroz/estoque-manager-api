@@ -18,9 +18,19 @@ export const findAll = async (
   page: number,
   pageSize: number,
   sort: ListProductsSort,
+  search?: string,
 ) => {
   const skip = (page - 1) * pageSize;
-  const where = { deletedAt: null };
+
+  const where: Prisma.ProductWhereInput = {
+    deletedAt: null,
+    ...(search && {
+      OR: [
+        { name: { contains: search } },
+        { category: { contains: search } },
+      ],
+    }),
+  };
 
   const [data, total] = await Promise.all([
     prisma.product.findMany({
@@ -29,7 +39,6 @@ export const findAll = async (
       where,
       orderBy: { [sort.sortBy]: sort.sortOrder },
     }),
-
     prisma.product.count({ where }),
   ]);
 
