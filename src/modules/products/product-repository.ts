@@ -45,6 +45,7 @@ export const findAll = async (
 export const exportAll = async () => {
   const products = await prisma.product.findMany({
     where: { deletedAt: null },
+    orderBy: { createdAt: "desc" },
   });
   return products;
 };
