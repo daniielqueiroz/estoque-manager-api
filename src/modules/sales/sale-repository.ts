@@ -74,7 +74,7 @@ export const exportAll = async (range: DateRangeInput) => {
     where: {
       createdAt: { gte: range.startDate, lte: range.endDate },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
     include: { _count: { select: { items: true } } },
   });
 
