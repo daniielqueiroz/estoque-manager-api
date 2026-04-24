@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { CreateSaleInput, findSaleIdSchema } from "./sale-schema";
+import {
+  CreateSaleInput,
+  findSaleIdSchema,
+  listSalesSortSchema,
+} from "./sale-schema";
 import { dateRangeSchema } from "../../shared/schemas/dateRange";
 import * as SaleService from "./sale-service";
 import { paginationSchema } from "../../shared/schemas/pagination";
@@ -14,8 +18,9 @@ export const postSale = async (req: Request, res: Response) => {
 
 export const getSales = async (req: Request, res: Response) => {
   const { page, pageSize } = paginationSchema.parse(req.query);
+  const sort = listSalesSortSchema.parse(req.query);
 
-  const sales = await SaleService.listSales(page, pageSize);
+  const sales = await SaleService.listSales(page, pageSize, sort);
   return res.status(200).json(sales);
 };
 

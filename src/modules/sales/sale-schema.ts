@@ -21,3 +21,10 @@ export const findSaleIdSchema = z.object({
 });
 export type FindSaleIdInput = z.infer<typeof findSaleIdSchema>;
 
+export const listSalesSortSchema = z.object({
+  sortBy: z
+    .enum(["customerName", "items", "totalAmount", "status", "createdAt"])
+    .default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+export type ListSalesSort = z.infer<typeof listSalesSortSchema>;

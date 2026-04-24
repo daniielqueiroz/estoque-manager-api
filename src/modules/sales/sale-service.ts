@@ -1,4 +1,4 @@
-import { CreateSaleInput, FindSaleIdInput } from "./sale-schema";
+import { CreateSaleInput, FindSaleIdInput, ListSalesSort } from "./sale-schema";
 import { DateRangeInput } from "../../shared/schemas/dateRange";
 import * as ProductRepository from "../products/product-repository";
 import * as SaleRepository from "./sale-repository";
@@ -47,8 +47,12 @@ export const createSale = async (data: CreateSaleInput) => {
   return SaleRepository.create(data.customerName, totalAmount, items);
 };
 
-export const listSales = async (page: number, pageSize: number) => {
-  const { data, total } = await SaleRepository.findAll(page, pageSize);
+export const listSales = async (
+  page: number,
+  pageSize: number,
+  sort: ListSalesSort,
+) => {
+  const { data, total } = await SaleRepository.findAll(page, pageSize, sort);
 
   return paginate({ data, total, page, pageSize });
 };

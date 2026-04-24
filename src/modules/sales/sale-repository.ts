@@ -1,6 +1,6 @@
 import { Prisma, SaleStatus } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
-import { FindSaleIdInput } from "./sale-schema";
+import { FindSaleIdInput, ListSalesSort } from "./sale-schema";
 import { DateRangeInput } from "../../shared/schemas/dateRange";
 import { DailySaleRow } from "../products/product-schema";
 
@@ -45,16 +45,23 @@ export const create = async (
   });
 };
 
-export const findAll = async (page: number, pageSize: number) => {
+export const findAll = async (
+  page: number,
+  pageSize: number,
+  sort: ListSalesSort,
+) => {
   const skip = (page - 1) * pageSize;
+
+  const orderBy: Prisma.SaleOrderByWithRelationInput =
+    sort.sortBy === "items"
+      ? { items: { _count: sort.sortOrder } }
+      : { [sort.sortBy]: sort.sortOrder };
 
   const [data, total] = await Promise.all([
     prisma.sale.findMany({
       skip,
       take: pageSize,
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy,
       include: {
         items: true,
       },
