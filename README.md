@@ -103,6 +103,18 @@ O arquivo `src/lib/prisma.ts` exporta uma única instância compartilhada do `Pr
 **Tipagem end-to-end com Zod**
 Os schemas Zod são a única fonte de verdade para os tipos de entrada. Os tipos TypeScript são todos derivados via `z.infer<typeof schema>`, garantindo que schema e tipos nunca fiquem dessincronizados.
 
+**Listagens padronizadas com paginação e ordenação**
+As rotas de listagem (`GET /products` e `GET /sales`) compartilham o mesmo contrato de paginação (`page`, `pageSize`) e ordenação (`sortBy`, `sortOrder`) validado com Zod. A resposta também segue um formato único (`data`, `total`, `page`, `pageSize`, `totalPages`) via helper de paginação, simplificando consumo no frontend e manutenção no backend.
+
+**Busca textual no catálogo de produtos**
+A listagem de produtos suporta `search` por nome e/ou categoria com filtro server-side na camada de repositório, mantendo o mesmo endpoint de listagem e evitando duplicação de rotas para cenários de busca.
+
+**Timezone explícito para relatórios**
+Os relatórios consideram o header `x-timezone` para agregações por dia e, quando ausente ou inválido, aplicam fallback seguro para `UTC`. Essa decisão evita divergência de datas entre cliente e servidor em consultas por período.
+
+**Endpoints de export dedicados**
+As rotas `/products/export` e `/sales/export` foram separadas das listagens paginadas para permitir extração de conjuntos completos de dados sem comprometer a semântica e a performance dos endpoints de consulta padrão.
+
 **Tratamento centralizado de erros**
 A aplicação utiliza um middleware global de erros (`errorHandler`) registrado no `app.ts` como última camada. Qualquer exceção lançada em qualquer ponto da aplicação é automaticamente capturada pelo Express 5 — que propaga erros síncronos e assíncronos sem necessidade de `try/catch` nos controllers — e encaminhada a esse middleware.
 
