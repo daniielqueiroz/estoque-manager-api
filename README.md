@@ -24,7 +24,7 @@ Projeto desenvolvido como portfólio pessoal.
 
 ## Arquitetura
 
-O projeto segue uma **arquitetura modular em camadas**, onde cada domínio de negócio (produtos, vendas) é organizado em um módulo independente e autocontido. As responsabilidades são divididas em quatro camadas bem definidas.
+O projeto segue uma **arquitetura modular em camadas**, onde cada domínio de negócio (produtos, vendas, dashboard) é organizado em um módulo independente e autocontido. As responsabilidades são divididas em quatro camadas bem definidas.
 
 ### Estrutura de Diretórios
 
@@ -52,12 +52,19 @@ src/
     │   ├── product-repository.ts  # Queries no banco de dados
     │   └── product-schema.ts      # Schemas Zod e tipos inferidos
     │
-    └── sales/
-        ├── sale-routers.ts        # Definição das rotas HTTP
-        ├── sale-controller.ts     # Tratamento de req/res HTTP
-        ├── sale-service.ts        # Regras de negócio
-        ├── sale-repository.ts     # Queries no banco de dados
-        └── sale-schema.ts         # Schemas Zod e tipos inferidos
+    ├── sales/
+    │   ├── sale-routers.ts        # Definição das rotas HTTP
+    │   ├── sale-controller.ts     # Tratamento de req/res HTTP
+    │   ├── sale-service.ts        # Regras de negócio
+    │   ├── sale-repository.ts     # Queries no banco de dados
+    │   └── sale-schema.ts         # Schemas Zod e tipos inferidos
+    │
+    └── dashboard/
+        ├── dashboard-router.ts     # Definição das rotas HTTP
+        ├── dashboard-controller.ts # Tratamento de req/res HTTP
+        ├── dashboard-service.ts    # Regras de negócio
+        ├── dashboard-repository.ts # Queries no banco de dados
+        └── dashboard-schema.ts     # Schemas Zod e tipos inferidos
 ```
 
 ### As Quatro Camadas
@@ -119,11 +126,46 @@ Todos os endpoints são prefixados com `/api`.
 | Método   | Rota                       | Descrição                                           |
 | -------- | -------------------------- | --------------------------------------------------- |
 | `POST`   | `/api/products`            | Cadastra um novo produto                            |
-| `GET`    | `/api/products`            | Lista todos os produtos ativos                      |
+| `GET`    | `/api/products`            | Lista produtos ativos com paginação, sort e search  |
+| `GET`    | `/api/products/export`     | Exporta todos os produtos ativos                    |
 | `GET`    | `/api/products/:id`        | Busca um produto pelo ID (UUID)                     |
 | `GET`    | `/api/products/:id/report` | Gera relatório de vendas de um produto por período  |
 | `PUT`    | `/api/products/:id`        | Atualiza um produto (todos os campos são opcionais) |
 | `DELETE` | `/api/products/:id`        | Remove um produto via soft delete                   |
+
+#### GET /api/products — Query Params
+
+| Parâmetro   | Tipo      | Obrigatório | Padrão      | Regras                                                                 |
+| ----------- | --------- | ----------- | ----------- | ---------------------------------------------------------------------- |
+| `page`      | integer   | Não         | `1`         | Mínimo `1`                                                             |
+| `pageSize`  | integer   | Não         | `10`        | Entre `1` e `50`                                                       |
+| `sortBy`    | string    | Não         | `updatedAt` | `name`, `price`, `category`, `quantity`, `createdAt`, `updatedAt`     |
+| `sortOrder` | string    | Não         | `desc`      | `asc` ou `desc`                                                        |
+| `search`    | string    | Não         | —           | Busca parcial em `name` **ou** `category`                              |
+
+**Resposta (paginada):**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid-do-produto",
+      "name": "Teclado Mecânico",
+      "description": "Teclado mecânico switches blue, ABNT2",
+      "price": 299.9,
+      "quantity": 50,
+      "category": "Periféricos",
+      "createdAt": "2025-01-10T15:00:00.000Z",
+      "updatedAt": "2025-01-10T15:00:00.000Z",
+      "deletedAt": null
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 10,
+  "totalPages": 1
+}
+```
 
 #### POST /api/products — Corpo da requisição
 
@@ -143,7 +185,7 @@ Todos os endpoints são prefixados com `/api`.
 | `description` | string  | Máximo 250 caracteres           |
 | `price`       | number  | Deve ser maior que zero         |
 | `quantity`    | integer | Deve ser maior ou igual a zero  |
-| `category`    | string  | Máximo 50 caracteres            |
+| `category`    | string  | Mínimo 3, máximo 50 caracteres  |
 
 #### PUT /api/products/:id — Corpo da requisição
 
@@ -159,13 +201,15 @@ Todos os campos são opcionais. Campos não enviados não são alterados. Campos
 #### GET /api/products/:id/report — Query Params
 
 ```
-GET /api/products/:id/report?startDate=2025-01-01&endDate=2025-01-31
+GET /api/products/:id/report?startDate=2025-01-01T00:00:00.000Z&endDate=2025-01-31T23:59:59.999Z
 ```
 
-| Parâmetro   | Formato      | Descrição                                        |
-| ----------- | ------------ | ------------------------------------------------ |
-| `startDate` | `YYYY-MM-DD` | Data de início do período (inclusiva)            |
-| `endDate`   | `YYYY-MM-DD` | Data de fim do período (inclusiva, até 23:59:59) |
+| Parâmetro   | Formato  | Descrição                       |
+| ----------- | -------- | ------------------------------- |
+| `startDate` | ISO 8601 | Data/hora de início (inclusiva) |
+| `endDate`   | ISO 8601 | Data/hora de fim (exclusiva)    |
+
+Header opcional: `x-timezone` (ex.: `America/Sao_Paulo`). Se ausente/inválido, a API usa `UTC`.
 
 **Resposta:**
 
@@ -179,14 +223,14 @@ GET /api/products/:id/report?startDate=2025-01-01&endDate=2025-01-31
     "category": "Periféricos"
   },
   "report": {
-    "salesOccurrences": 8,
+    "totalSales": 8,
     "totalProductsSold": 15,
     "totalRevenue": 4498.5,
     "dailySales": [
       {
         "date": "2025-01-10",
-        "salesOccurrences": 3,
-        "totalQuantity": 5,
+        "dailySales": 3,
+        "productsSold": 5,
         "avgPrice": 299.9,
         "revenue": 1499.5
       }
@@ -197,12 +241,12 @@ GET /api/products/:id/report?startDate=2025-01-01&endDate=2025-01-31
 
 | Campo                                  | Descrição                                              |
 | -------------------------------------- | ------------------------------------------------------ |
-| `report.salesOccurrences`              | Total de transações de venda em que o produto apareceu |
+| `report.totalSales`                    | Total de transações de venda em que o produto apareceu |
 | `report.totalProductsSold`             | Total de unidades vendidas no período                  |
 | `report.totalRevenue`                  | Receita total gerada pelo produto no período           |
 | `report.dailySales`                    | Detalhamento por dia                                   |
-| `report.dailySales[].salesOccurrences` | Número de vendas no dia                                |
-| `report.dailySales[].totalQuantity`    | Unidades vendidas no dia                               |
+| `report.dailySales[].dailySales`       | Número de vendas no dia                                |
+| `report.dailySales[].productsSold`     | Unidades vendidas no dia                               |
 | `report.dailySales[].avgPrice`         | Preço médio praticado no dia                           |
 | `report.dailySales[].revenue`          | Receita do dia                                         |
 
@@ -213,10 +257,49 @@ GET /api/products/:id/report?startDate=2025-01-01&endDate=2025-01-31
 | Método  | Rota                    | Descrição                                      |
 | ------- | ----------------------- | ---------------------------------------------- |
 | `POST`  | `/api/sales`            | Registra uma nova venda                        |
-| `GET`   | `/api/sales`            | Lista todas as vendas com seus itens           |
+| `GET`   | `/api/sales`            | Lista vendas com paginação e ordenação         |
+| `GET`   | `/api/sales/export`     | Exporta vendas por intervalo de datas          |
 | `GET`   | `/api/sales/:id`        | Busca uma venda pelo ID com detalhes completos |
 | `GET`   | `/api/sales/report`     | Gera relatório de vendas por período           |
 | `PATCH` | `/api/sales/:id/cancel` | Cancela uma venda e estorna o estoque          |
+
+#### GET /api/sales — Query Params
+
+| Parâmetro   | Tipo      | Obrigatório | Padrão      | Regras                                                   |
+| ----------- | --------- | ----------- | ----------- | -------------------------------------------------------- |
+| `page`      | integer   | Não         | `1`         | Mínimo `1`                                               |
+| `pageSize`  | integer   | Não         | `10`        | Entre `1` e `50`                                         |
+| `sortBy`    | string    | Não         | `createdAt` | `customerName`, `items`, `totalAmount`, `status`, `createdAt` |
+| `sortOrder` | string    | Não         | `desc`      | `asc` ou `desc`                                          |
+
+`sortBy=items` ordena pela quantidade de itens da venda.
+
+#### GET /api/sales/export — Query Params
+
+```
+GET /api/sales/export?startDate=2025-01-01T00:00:00.000Z&endDate=2025-01-31T23:59:59.999Z
+```
+
+| Parâmetro   | Formato  | Descrição                       |
+| ----------- | -------- | ------------------------------- |
+| `startDate` | ISO 8601 | Data/hora de início (inclusiva) |
+| `endDate`   | ISO 8601 | Data/hora de fim (inclusiva)    |
+
+**Resposta:**
+
+```json
+[
+  {
+    "id": "uuid-da-venda",
+    "customerName": "João da Silva",
+    "totalAmount": 599.8,
+    "status": "CONFIRMED",
+    "createdAt": "2025-01-10T15:00:00.000Z",
+    "updatedAt": "2025-01-10T15:00:00.000Z",
+    "itemCount": 2
+  }
+]
+```
 
 #### POST /api/sales — Corpo da requisição
 
@@ -243,34 +326,96 @@ GET /api/products/:id/report?startDate=2025-01-01&endDate=2025-01-31
 | `items[].productId` | string (UUID) | ID válido de um produto existente |
 | `items[].quantity`  | integer       | Deve ser maior que zero           |
 
+**Resposta do GET /api/sales (paginada):**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid-da-venda",
+      "customerName": "João da Silva",
+      "totalAmount": 599.8,
+      "status": "CONFIRMED",
+      "createdAt": "2025-01-10T15:00:00.000Z",
+      "updatedAt": "2025-01-10T15:00:00.000Z",
+      "items": [
+        {
+          "id": "uuid-do-item",
+          "saleId": "uuid-da-venda",
+          "productId": "uuid-do-produto",
+          "quantity": 2,
+          "unitPrice": 299.9,
+          "createdAt": "2025-01-10T15:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 10,
+  "totalPages": 1
+}
+```
+
 #### GET /api/sales/report — Query Params
 
 ```
-GET /api/sales/report?startDate=2025-01-01&endDate=2025-01-31
+GET /api/sales/report?startDate=2025-01-01T00:00:00.000Z&endDate=2025-01-31T23:59:59.999Z
 ```
 
-| Parâmetro   | Formato      | Descrição                                        |
-| ----------- | ------------ | ------------------------------------------------ |
-| `startDate` | `YYYY-MM-DD` | Data de início do período (inclusiva)            |
-| `endDate`   | `YYYY-MM-DD` | Data de fim do período (inclusiva, até 23:59:59) |
+| Parâmetro   | Formato  | Descrição                       |
+| ----------- | -------- | ------------------------------- |
+| `startDate` | ISO 8601 | Data/hora de início (inclusiva) |
+| `endDate`   | ISO 8601 | Data/hora de fim (exclusiva)    |
+
+Header opcional: `x-timezone` (ex.: `America/Sao_Paulo`). Se ausente/inválido, a API usa `UTC`.
 
 **Resposta:**
 
 ```json
 {
-  "period": {
-    "startDate": "2025-01-01",
-    "endDate": "2025-01-31"
-  },
   "totalSales": 15,
+  "totalProductsSold": 28,
   "totalRevenue": 4500.0,
-  "topProducts": [
+  "dailySales": [
     {
-      "productName": "Teclado Mecânico",
-      "quantitySold": 10,
-      "revenue": 2990.0
+      "date": "2025-01-10",
+      "dailySales": 3,
+      "productsSold": 5,
+      "avgPrice": 299.9,
+      "revenue": 1499.5
     }
   ]
+}
+```
+
+---
+
+### Dashboard — `/api/dashboard`
+
+| Método | Rota             | Descrição                                 |
+| ------ | ---------------- | ----------------------------------------- |
+| `GET`  | `/api/dashboard` | Retorna indicadores agregados por período |
+
+#### GET /api/dashboard — Query Params
+
+```
+GET /api/dashboard?startDate=2025-01-01T00:00:00.000Z&endDate=2025-01-31T23:59:59.999Z
+```
+
+| Parâmetro   | Formato  | Descrição                       |
+| ----------- | -------- | ------------------------------- |
+| `startDate` | ISO 8601 | Data/hora de início (inclusiva) |
+| `endDate`   | ISO 8601 | Data/hora de fim (exclusiva)    |
+
+**Resposta:**
+
+```json
+{
+  "totalSales": 15,
+  "revenue": 4500.0,
+  "averageTicket": 300.0,
+  "totalProducts": 42
 }
 ```
 
