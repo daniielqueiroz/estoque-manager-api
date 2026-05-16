@@ -1,8 +1,9 @@
-# Estoque Manager
+# Estoque Manager - API
+[![WEB](https://img.shields.io/badge/Frontend-estoque--manager--web-black?logo=github)](https://github.com/daniielqueiroz/estoque-manager-web)
 
-API REST para gerenciamento de estoque e vendas. Permite o cadastro, consulta, atualização e remoção de produtos, além do controle completo do ciclo de vendas e geração de relatórios por período.
-
-Projeto desenvolvido como portfólio pessoal.
+> API REST para gerenciamento de estoque e vendas.
+> Permite o cadastro, consulta, atualização e remoção de produtos,
+>  além do controle completo do ciclo de vendas e geração de relatórios por período.
 
 ---
 
